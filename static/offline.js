@@ -1,0 +1,32 @@
+/* Offline DDR outbox. Never cache authenticated API responses or account passwords. */
+const Offline=(()=>{
+  const NAME='mms-drilling-offline-v1',STORE='records';let database=null,isOffline=false,syncing=false;
+  function open(){return new Promise((resolve,reject)=>{let req=indexedDB.open(NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore(STORE,{keyPath:'key'});req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+  async function init(){try{database=await open()}catch(err){console.warn('Offline storage unavailable',err)}if('serviceWorker'in navigator)try{await navigator.serviceWorker.register('/sw.js');await Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Cache aplikasi belum siap')),8000))])}catch(err){console.warn('App shell unavailable',err)}}
+  function operation(mode,action){if(!database)return Promise.reject(Error('Penyimpanan offline tidak tersedia di browser ini'));return new Promise((resolve,reject)=>{let tx=database.transaction(STORE,mode),req=action(tx.objectStore(STORE)),result;req.onsuccess=()=>{result=req.result};req.onerror=()=>reject(req.error);tx.oncomplete=()=>resolve(result);tx.onabort=()=>reject(tx.error)})}
+  const put=(key,value)=>operation('readwrite',s=>s.put({key,value}));
+  const get=async key=>(await operation('readonly',s=>s.get(key)))?.value;
+  const del=key=>operation('readwrite',s=>s.delete(key));
+  const all=async()=>{let records=await operation('readonly',s=>s.getAll());return records.map(x=>x.value)};
+  function setOffline(value){isOffline=value;document.querySelector('#offlineBanner').classList.toggle('hidden',!value);document.body.classList.toggle('offline-mode',value)}
+  async function rememberSession(s){await put('identity',{username:s.username,role:s.role,expires:Date.now()+30*86400000})}
+  async function loadSession(){let s=await get('identity');if(!s)return null;if(s.expires<Date.now()){await del('identity');return null}return s}
+  const forgetSession=()=>del('identity');
+  const markLogout=()=>put('pending-logout',true);
+  async function flushLogout(){if(!await get('pending-logout'))return;let response=await fetch('/api/session',{cache:'no-store'});let current=await response.json();if(current.username){let out=await fetch('/api/logout',{method:'POST',headers:{'X-CSRF-Token':current.csrf}});if(!out.ok)throw Error('Gagal mencabut sesi lama')}await del('pending-logout')}
+  async function cacheMaster(user,data){await put('master:'+user,{...data,at:Date.now()})}
+  const loadMaster=user=>get('master:'+user);
+  async function queueReport(user,path,payload){if(!user||!payload.client_request_id)throw Error('Identitas laporan offline tidak lengkap');let item={id:payload.client_request_id,user,path,payload,at:new Date().toISOString(),error:''};await put('queue:'+item.id,item);await render(user);return item}
+  async function list(user){return (await all()).filter(x=>x?.user===user&&x.id&&x.payload).sort((a,b)=>a.at.localeCompare(b.at))}
+  async function getQueued(user,id){let item=await get('queue:'+id);return item?.user===user?item:null}
+  async function remove(user,id){let item=await get('queue:'+id);if(item?.user!==user)throw Error('Laporan bukan milik akun ini');await del('queue:'+id);await render(user)}
+  async function render(user){let box=document.querySelector('#offlineQueue');if(!box||!user)return;let rows=await list(user);box.innerHTML=rows.length?`<div class="panel"><h3>Antrean DDR · ${rows.length}</h3><p>Data tersimpan di perangkat ini. Jangan hapus data situs sebelum semua laporan tersinkron.</p><ol>${rows.map(x=>`<li><strong>${esc(x.payload.work_date)} · ${esc(x.payload.shift)} · ${esc(x.payload.ddr_detail?.identity?.hole||'Drillhole')}</strong> <small>${esc(typeof editingQueuedId!=='undefined'&&editingQueuedId===x.id?'Sedang diperbaiki. Simpan perubahan untuk melanjutkan sinkronisasi.':x.error||'Menunggu sinkronisasi')}</small><br><button type="button" class="secondary" data-edit-ddr="${esc(x.id)}">Perbaiki</button><button type="button" class="secondary" data-retry-ddr="${esc(x.id)}">Kirim ulang</button><button type="button" class="secondary" data-delete-ddr="${esc(x.id)}">Hapus antrean</button></li>`).join('')}</ol><button type="button" class="primary" id="syncDDR">Sinkronkan semua</button></div>`:''}
+  async function sync(user){if(syncing||isOffline||!user)return;syncing=true;try{let server=await api('/api/session');if(server.username!==user){await forgetSession();session=null;document.querySelector('#loginGate').classList.remove('hidden');document.querySelector('#loginMessage').textContent='Sesi server berakhir. Masuk kembali dengan akun pembuat DDR untuk sinkronisasi.';return}session.csrf=server.csrf;for(let item of await list(user)){if(session?.username!==user)break;if(typeof editingQueuedId!=='undefined'&&editingQueuedId===item.id)continue;try{let response=await api(item.path,{method:'POST',body:JSON.stringify(item.payload)});if(response.id)await del('queue:'+item.id)}catch(err){if(err instanceof TypeError){setOffline(true);break}item.error=err.message;await put('queue:'+item.id,item);if(err.message.includes('Silakan login'))break}}if(session?.username===user){await render(user);if(!isOffline)await refresh()}}catch(err){if(err instanceof TypeError)setOffline(true)}finally{syncing=false}}
+  document.addEventListener('click',async event=>{if(!session?.username)return;let retry=event.target.closest('#syncDDR,[data-retry-ddr]');if(retry){if(isOffline){if(!await probe())toast('Server belum terhubung');return}await sync(session.username)}let erase=event.target.closest('[data-delete-ddr]');if(erase&&confirm('Hapus DDR yang belum tersinkron dari perangkat ini? Data tidak dapat dipulihkan.'))await remove(session.username,erase.dataset.deleteDdr)});
+  async function probe(){try{let response=await fetch('/api/version',{cache:'no-store'});if(!response.ok)return false;await flushLogout();setOffline(false);if(session?.username)await sync(session.username);return true}catch{return false}}
+  window.addEventListener('online',probe);
+  setInterval(()=>{if(isOffline)probe()},15000);
+  const cacheMap=(user,data)=>put('map:'+user,data);
+  const loadMap=user=>get('map:'+user);
+  return {cacheMap,loadMap,init,rememberSession,loadSession,forgetSession,markLogout,flushLogout,probe,cacheMaster,loadMaster,queueReport,getQueued,remove,list,render,sync,setOffline,get isOffline(){return isOffline}}
+})();

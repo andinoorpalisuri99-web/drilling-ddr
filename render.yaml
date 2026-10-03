@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: drilling-ddr
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python start.py
+    plan: free
+    envVars:
+      - key: DRILLING_SECURE_COOKIES
+        value: "1"
+      - key: DRILLING_HOST
+        value: "0.0.0.0"
+    healthCheckPath: /api/version

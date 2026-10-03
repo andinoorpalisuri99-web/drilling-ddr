@@ -1,0 +1,24 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite WAL/SHM runtime files (tidak diperlukan di repo)
+drilling.db-shm
+drilling.db-wal
+
+# drilling.db SENGAJA TIDAK di-ignore — dipakai sebagai seed data awal di Railway Volume
+# Setelah deploy pertama, data production tersimpan di /data/drilling.db (volume)
+
+# Backup & recovery (data lokal)
+backups/
+recovery/
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db

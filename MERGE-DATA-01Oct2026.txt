@@ -1,0 +1,25 @@
+PENGGABUNGAN DATA — 1 Oktober 2026
+Kode: patch terakhir v0.8.13, tidak diganti dengan kode dari kiriman teman.
+Sumber data: Drilling(2).rar; database dibaca bersama WAL melalui SQLite snapshot.
+
+HASIL
+- 14 DDR sebelumnya dipertahankan; 18 DDR baru (ID 18–35) ditambahkan. Total 32 DDR (ID 4–35).
+- Pembaruan DDR ID 4 dan 6: persetujuan/review. ID 12: status tagihan dan persetujuan/review.
+- Tidak ada perubahan nilai kedalaman pada 14 DDR sebelumnya.
+- 27 audit DDR dan 6 riwayat koreksi baru disertakan.
+- 1 target harian baru tanggal 30 September 2026 untuk rig ID 3, 20 meter, beserta riwayatnya.
+- 5 rig, 2 akun dan hash password tetap sama. Sesi login lama tidak disalin.
+- Tidak membawa backup lama, data QA, cache Python, WAL atau SHM.
+
+VERIFIKASI
+- Seluruh baris reports, audit, report_revisions, period_targets dan period_target_revisions hasil gabungan sama dengan snapshot terbaru kiriman teman.
+- SQLite integrity_check: ok; foreign_key_check: tidak ada pelanggaran.
+- 32 ID DDR unik; 64 ekspor PDF/Excel berhasil.
+- Preview PDF desktop/mobile dan akses teknisi diperiksa; tidak ada error JavaScript pada skenario tersebut.
+- Pengujian menggunakan salinan database terpisah. Data paket tidak diubah oleh QA.
+- Cakupan audit kode sebelumnya tercatat di AUDIT-v0.8.13.txt; angka 14 DDR di sana merupakan keadaan sebelum penggabungan ini.
+
+PEMASANGAN
+Tutup aplikasi lama, backup folder lama, lalu ekstrak paket ini ke FOLDER BARU dan jalankan MULAI.bat. Jangan campurkan database paket dengan WAL/SHM folder lama. Paket membawa data sampai arsip teman ini dibuat. Input tambahan setelah pengiriman arsip belum termasuk. Antrean offline browser tidak ada dalam arsip database.
+
+SHA256 arsip sumber: 3d36b623f09720b2af10ba68d95a7c0e543282e1459b770b1da4baa0e5f3ed2a
