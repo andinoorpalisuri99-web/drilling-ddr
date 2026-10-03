@@ -92,7 +92,9 @@ def pages(report):
     d=ddr_rules.detail(report);ident=d.get('identity',{});move=d.get('movement',{})
     # Main sheet preserves the supplied form. Additional sheets repeat its grid.
     spec=[('open_holes',6,18,['H','I','J','K'],['from','to','interval','lithology']),('runs',16,27,['H','I','J','K','M','N','O','P','R'],['run','from','to','cored','recovered','recovery_pct','core_loss','rqd_pct','comment']),('lost_tools',3,21,['M','O','R','S'],['tool','size','qty','remark']),('activities',17,46,['H','I','J','T'],['from','to','name','hours'])]
-    chunks=activity_chunks(d.get('activities',[]))
+    from ddr_metrics import clock
+    anchor=clock(report.get('start_time') or '07:00')
+    chunks=activity_chunks(sorted(d.get('activities',[]),key=lambda a:(clock(a['from'])-anchor)%1440))
     count=max([len(chunks)]+[math.ceil(len(d.get(k,[]))/cap) for k,cap,*_ in spec if k!='activities']);out=[]
     hourly={name:sum(minutes(a) for a in d.get('activities',[]) if a['name']==name)/60 for names in ddr_detail.ACTIVITIES.values() for name in names}
     hours_rows=[20,21,*range(24,29),*range(31,45),*range(47,61),*range(66,72)]
@@ -100,6 +102,8 @@ def pages(report):
     for page in range(count):
         values={'H72':'Driller','L72':'Wellsite','E9':report['work_date'],'E10':datetime.strptime(report['work_date'],'%Y-%m-%d').strftime('%A'),'E11':report['shift'],'E12':ident.get('geologist',''),'E13':ident.get('assistant_geologist',''),'E14':ident.get('azimuth','')+' / '+ident.get('dip',''),'P9':report.get('location',''),'P10':ident.get('hole',''),'P11':report.get('rig',''),'P12':ident.get('driller',''),'P13':ident.get('crew',''),'N17':move.get('from_hole',''),'P17':move.get('to_hole',''),'S17':move.get('distance_m',0),'F72':sum(hourly.values()),'Q2':f"DDR #{report['id']} / Rev {report.get('revision',0)}",'Q4':report.get('status',''),'Q6':f'Form {page+1}/{count} + Lampiran'}
         values['B12']='Wellsite Geologist /\nGeotech'
+        if 'progress_pct' in move:
+            values['M16']='Moving Progress';values['S16']='Progress (%)';values['S17']=move['progress_pct'] if move['progress_pct'] is not None else ''
         for row,name in zip(hours_rows,names):values['F'+str(row)]=round(hourly[name],2)
         for k,c in zip(ddr_detail.CONSUMABLES,['J','K','M','N','O','P','R','S','T']):values[c+'66']=d.get('consumables',{}).get(k,0)
         for kind,cap,start,cols,keys in spec:
@@ -110,13 +114,18 @@ def pages(report):
     return out
 
 def appendix(report):
-    d=ddr_rules.detail(report);units=d.get('units',{});red=d.get('redrill',{})
+    d=dict(ddr_rules.detail(report));units=d.get('units',{});red=d.get('redrill',{})
+    from ddr_metrics import clock
+    anchor=clock(report.get('start_time') or '07:00')
+    d['activities']=sorted(d.get('activities',[]),key=lambda a:(clock(a['from'])-anchor)%1440)
     # Metadata and full free text are retained here; compact form cells may abbreviate.
     rows=[['Section','Item / time','Field','Value'],['DDR',str(report['id']),'Revision / status',f"{report.get('revision',0)} / {report.get('status','')}"],['DDR','','Creator',report.get('operator','')],['Depth','','Start / end (m)',f"{report['start_depth']} / {report['end_depth']}"],['Hours','','DDR start / end',report['start_time']+' / '+report['end_time']],['Work','','Type / parent',red.get('kind','Normal')+' / '+red.get('parent','')],['Work','','Redrill reason',red.get('reason','')]]
     from ddr_metrics import commercial,hours,HOUR_LABELS
     summary=commercial(report)
     times,_=hours(report)
     for k,v in times.items():rows.append(['Waktu','',HOUR_LABELS[k]+' (jam)',round(v/60,4)])
+    rows.append(['Movement','','Progress (%)',d.get('movement',{}).get('progress_pct') if d.get('movement',{}).get('progress_pct') is not None else 'Belum dicatat'])
+    rows.append(['Movement','','Riwayat jarak (m)',d.get('movement',{}).get('distance_m',0)])
     rows.append(['Tagihan','','Aturan recovery','Per run: <95% tarif Open Hole; >=95% tarif Coring. Aktivitas asli tetap tercatat.'])
     labels={'actual_m':'Total meter aktual','actual_oh_m':'Aktual Open Hole','actual_core_m':'Aktual Coring','tariff_oh_m':'OH + Coring recovery <95%','tariff_core_m':'Coring recovery >=95%','unclassified_m':'Meter perlu verifikasi','eligible_m':'Meter ditagih (status Billable)','nonbillable_m':'Meter tidak ditagih','pending_m':'Meter menunggu keputusan'}
     for key,label in labels.items():rows.append(['Rekap meter','',label+' (m)',summary[key]])

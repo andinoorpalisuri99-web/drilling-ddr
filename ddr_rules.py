@@ -125,6 +125,10 @@ def overview(db,user,start,end,rig_id=0):
     latest=db.execute("SELECT MAX(work_date) AS latest_work_date,MAX(COALESCE(reviewed_at,created_at)) AS latest_saved_at FROM reports WHERE status!='Rejected' AND rig_id IN (SELECT id FROM rigs WHERE active=1)"+condition,([user['username']] if condition else [])).fetchone()
     excluded=[r for r in rows if not r['rig_active'] and r['status']!='Rejected']
     measures=ddr_metrics.overview(rows)
+    measures['availability']={'restricted':True} if user['role']=='operator' else ddr_metrics.availability(rows)
+    if user['role']!='operator':
+        history=[dict(r) for r in db.execute('SELECT r.*,COALESCE(r.rig_code_snapshot,g.code) rig,g.active rig_active FROM reports r JOIN rigs g ON g.id=r.rig_id'+(' WHERE r.rig_id=?' if rig_id else ''),([rig_id] if rig_id else []))]
+        measures['availability']['attention']=ddr_metrics.availability(history)['issues']
     inactive_m=sum((ddr_metrics.dec(r['end_depth'])-ddr_metrics.dec(r['start_depth']) for r in excluded),ddr_metrics.ZERO)
     rows=[r for r in rows if r['rig_active']]
     return {**measures,'scope':'active_rigs','excluded_inactive_count':len(excluded),'excluded_inactive_m':float(inactive_m),'freshness':dict(latest),'meters':measures['metrics']['actual_m'],'counts':{s:sum(r['status']==s for r in rows) for s in ('Submitted','Approved','Rejected')}}

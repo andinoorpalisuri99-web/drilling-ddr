@@ -135,7 +135,7 @@ def parse(raw, start_depth, end_depth, start_time, end_time):
     cons=raw.get('consumables',{})
     if not isinstance(cons,dict) or any(k not in CONSUMABLES for k in cons):raise ValueError('Consumable tidak valid')
     return {'version':raw.get('version',1),'redrill':{'kind':mode,'parent':parent,'reason':label(redrill.get('reason'),'Alasan redrill',250)},'readings':clean_readings,'units':units,'identity':identity,'activities':cleaned,'runs':core,'open_holes':holes,'lost_tools':lost,
-            'movement':{'distance_m':number(raw.get('movement',{}).get('distance_m') or 0,'Jarak pindah'),'from_hole':label(raw.get('movement',{}).get('from_hole'),'Dari drillhole',120),'to_hole':label(raw.get('movement',{}).get('to_hole'),'Ke drillhole',120)},
+            'movement':{'progress_pct':number(raw['movement']['progress_pct'],'Moving Progress (%)',100) if raw.get('movement',{}).get('progress_pct') not in ('',None) else None,'distance_m':number(raw.get('movement',{}).get('distance_m') or 0,'Jarak pindah'),'from_hole':label(raw.get('movement',{}).get('from_hole'),'Dari drillhole',120),'to_hole':label(raw.get('movement',{}).get('to_hole'),'Ke drillhole',120)},
             'consumables':{key:number(cons.get(key) or 0,key) for key in CONSUMABLES},
             'summary':{'group_minutes':totals,'activity_minutes':total,'activity_hours':round(total/60,2),'non_drilling_min':nonproductive,'standby_maintenance_min':totals['standby']+totals['maintenance'],'breakdown_maintenance_min':totals['maintenance'],'cored_m':round(sum(x['cored'] for x in core),2),'recovered_m':round(sum(x['recovered'] for x in core),2),'open_hole_m':round(sum(x['interval'] for x in holes),2)}}
 

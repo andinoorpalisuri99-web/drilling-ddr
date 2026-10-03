@@ -155,3 +155,60 @@ def overview(rows):
     return {'metrics':numeric(totals),'by_rig':[numeric(v) for v in by_rig.values()],
             'by_day':[numeric(by_day[k]) for k in sorted(by_day)],'time_minutes':times,
             'hours':{k:v/60 for k,v in times.items()},'verification':issues,'hour_labels':HOUR_LABELS}
+
+
+# Site policy: one 10-hour operating day (07:00–17:00), including breaks.
+# Missing time is unknown, never silently assigned to standby or maintenance.
+def availability(rows):
+    days={}
+    for r in rows:
+        if r['status']=='Rejected' or not r.get('rig_active',1):continue
+        key=(r['rig_id'],r['work_date'])
+        d=days.setdefault(key,{'rig_id':r['rig_id'],'rig':r.get('rig') or r.get('rig_code_snapshot') or str(r['rig_id']),
+            'date':r['work_date'],'report_ids':[],'intervals':[],'errors':[]})
+        d['report_ids'].append(r['id'])
+        acts=detail(r).get('activities',[])
+        if not acts:d['errors'].append('Rincian aktivitas belum tersedia')
+        for a in acts:
+            try:
+                start=clock(a['from']);end=start+activity_minutes(a)
+                d['intervals'].append((start,end,hour_group(a.get('name'))))
+            except (ValueError,KeyError,TypeError):d['errors'].append('Jam aktivitas tidak valid')
+    results=[]
+    for d in days.values():
+        intervals=sorted(d.pop('intervals'));cursor=420;gaps=[];overlap=0;outside=0
+        totals={k:0 for k in HOUR_LABELS}
+        for start,end,group in intervals:
+            outside+=max(0,min(end,420)-start)+max(0,end-max(start,1020))
+            a,b=max(420,start),min(1020,end)
+            if b<=a:continue
+            totals[group]+=b-a
+            if a>cursor:gaps.append((cursor,a))
+            overlap+=max(0,min(cursor,b)-a);cursor=max(cursor,b)
+        if cursor<1020:gaps.append((cursor,1020))
+        missing=sum(b-a for a,b in gaps)
+        invalid=bool(d['errors'] or overlap or outside)
+        d.update(scheduled_minutes=600,recorded_minutes=sum(totals.values()),missing_minutes=missing,
+            unknown_minutes=missing+totals['unverified'],operating_minutes=totals['drilling']+totals['support'],
+            maintenance_minutes=totals['maintenance'],overlap_minutes=overlap,outside_minutes=outside,
+            gaps=[f'{a//60:02d}:{a%60:02d}–{b//60:02d}:{b%60:02d}' for a,b in gaps],invalid=invalid)
+        d['status']='invalid' if invalid else 'provisional' if d['unknown_minutes'] else 'complete'
+        results.append(d)
+    def aggregate(items):
+        keys=('scheduled_minutes','recorded_minutes','missing_minutes','unknown_minutes','operating_minutes','maintenance_minutes')
+        out={k:sum(x[k] for x in items) for k in keys}
+        out.update(rig_days=len(items),complete_days=sum(x['status']=='complete' for x in items),
+            issue_days=sum(x['status']!='complete' for x in items))
+        out['status']='empty' if not items else 'invalid' if any(x['invalid'] for x in items) else 'provisional' if out['unknown_minutes'] else 'complete'
+        out.update(pa_min=None,pa_max=None,ua_min=None,ua_max=None)
+        if out['status'] in ('complete','provisional'):
+            scheduled=out['scheduled_minutes'];available=scheduled-out['maintenance_minutes'];unknown=out['unknown_minutes'];operating=out['operating_minutes']
+            out.update(pa_min=(available-unknown)/scheduled*100,pa_max=available/scheduled*100)
+            if available>0:out.update(ua_min=operating/available*100,ua_max=(operating+unknown)/available*100)
+        return out
+    by_rig=[]
+    for rig in sorted({d['rig_id'] for d in results}):
+        items=[d for d in results if d['rig_id']==rig]
+        by_rig.append({'rig_id':rig,'rig':items[0]['rig'],**aggregate(items)})
+    return {'fleet':aggregate(results),'by_rig':by_rig,'issues':[d for d in sorted(results,key=lambda x:(x['date'],x['rig'])) if d['status']!='complete'],
+        'schedule':'07:00–17:00','daily_minutes':600,'scope':'recorded_rig_days'}

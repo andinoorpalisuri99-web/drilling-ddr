@@ -15,7 +15,7 @@ import auth
 import ddr_detail
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.8.20'
+APP_VERSION = '0.8.21'
 DB = Path(os.environ.get('DRILLING_DB', ROOT / 'drilling.db'))
 STATIC = ROOT / 'static'
 

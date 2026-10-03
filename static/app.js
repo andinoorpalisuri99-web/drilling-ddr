@@ -85,13 +85,13 @@ async function activateOffline(){try{let saved=await Offline.loadSession();if(!s
 async function loadLoginAccounts(){const select=$('#loginAccount');try{const rows=await api('/api/login/accounts');select.replaceChildren(new Option('Pilih akun Anda',''));rows.forEach(x=>select.add(new Option(x.username,x.username)));select.disabled=false;if(!rows.length)$('#loginMessage').textContent='Belum ada akun aktif';}catch(err){select.replaceChildren(new Option('Daftar akun membutuhkan koneksi server',''));select.disabled=true;}}
 async function start(){await loadLoginAccounts();await Offline.init();try{await Offline.flushLogout()}catch(err){if(err instanceof TypeError)return activateOffline()}
  let version;try{version=await api('/api/version')}catch(e){if(e instanceof TypeError)return activateOffline();return incompatibleServer()}
- if(version.version!=='0.8.20')return incompatibleServer();
+ if(version.version!=='0.8.21')return incompatibleServer();
  try{let s=await api('/api/session');if(!s.username){$('#loginGate').classList.remove('hidden');return}applySession(s);await refresh();await Offline.sync(s.username)}
  catch(e){if(e instanceof TypeError)return activateOffline();$('#loginGate').classList.remove('hidden');$('#loginMessage').textContent='Gagal memuat aplikasi: '+e.message}
 }
 function incompatibleServer(){
  $('#loginGate').classList.remove('hidden');
- $('#loginForm').innerHTML='<span class="eyebrow">VERSI SERVER TIDAK COCOK</span><h2>Server lama masih berjalan</h2><p>Hentikan proses Python di terminal dengan Ctrl+C. Pasang patch versi 0.8.20, jalankan <code>python app.py</code>, lalu muat ulang halaman ini.</p>';
+ $('#loginForm').innerHTML='<span class="eyebrow">VERSI SERVER TIDAK COCOK</span><h2>Server lama masih berjalan</h2><p>Hentikan proses Python di terminal dengan Ctrl+C. Pasang patch versi 0.8.21, jalankan <code>python app.py</code>, lalu muat ulang halaman ini.</p>';
 }
 $('#togglePassword').onclick=()=>{let field=$('#loginPassword'),show=field.type==='password';field.type=show?'text':'password';$('#togglePassword').classList.toggle('is-visible',show);$('#togglePassword').querySelector('.eyeOpen').hidden=show;$('#togglePassword').querySelector('.eyeClosed').hidden=!show;$('#togglePassword').setAttribute('aria-pressed',String(show));$('#togglePassword').setAttribute('aria-label',show?'Sembunyikan kata sandi':'Tampilkan kata sandi');$('#togglePassword').title=show?'Sembunyikan kata sandi':'Tampilkan kata sandi'};
 $('#loginForm').onsubmit=async e=>{e.preventDefault();let data=Object.fromEntries(new FormData(e.target)),remember=!!data.remember;try{let s=await api('/api/login',{method:'POST',body:JSON.stringify(data)});if(remember)await Offline.rememberSession(s).catch(()=>toast('Penyimpanan perangkat tidak tersedia; Ingat saya dan offline tidak aktif'));else await Offline.forgetSession().catch(()=>{});Offline.setOffline(false);applySession(s);e.target.reset();await refresh();await Offline.sync(s.username)}catch(err){$('#loginMessage').textContent=err.message}};
