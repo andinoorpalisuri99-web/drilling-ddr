@@ -15,7 +15,7 @@ import auth
 import ddr_detail
 
 ROOT = Path(__file__).resolve().parent
-APP_VERSION = '0.8.21'
+APP_VERSION = '0.8.22'
 DB = Path(os.environ.get('DRILLING_DB', ROOT / 'drilling.db'))
 STATIC = ROOT / 'static'
 
@@ -126,6 +126,8 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if path in ('/','/index.html'):
             return self.send(200, (STATIC/'index.html').read_bytes(), 'text/html')
+        if path in ('/favicon.svg','/favicon.ico'):
+            return self.send(200,(STATIC/path[1:]).read_bytes(),'image/svg+xml' if path.endswith('.svg') else 'image/x-icon')
         map_assets={'/drilling-map.js':('drilling-map.js','text/javascript'),'/drilling-map.css':('drilling-map.css','text/css'),'/leaflet.js':('leaflet.js','text/javascript'),'/leaflet.css':('leaflet.css','text/css')}
         if path in map_assets:
             filename,kind=map_assets[path]

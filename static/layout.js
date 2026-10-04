@@ -39,4 +39,6 @@
   };
   new MutationObserver(schedule).observe(root, {childList:true,subtree:true});
   decorate();
+  const gate=document.querySelector('#loginGate');
+  new MutationObserver(()=>document.body.classList.toggle('authLocked',!gate.classList.contains('hidden'))).observe(gate,{attributes:true,attributeFilter:['class']});
 })();

@@ -92,3 +92,33 @@ main>header::after{left:0;right:0}
 @media(max-width:700px){.availabilityPanel{padding:16px}.availabilityMetrics{grid-template-columns:1fr 1fr;gap:16px}.availabilityMetrics p{grid-column:1/-1}.availabilityMetrics strong{font-size:24px}.availabilityHead{gap:8px}.availabilityRigGrid{grid-template-columns:1fr}}
 
 @media(max-width:420px){.availabilityMetrics strong{font-size:18px;white-space:nowrap;letter-spacing:-.3px}}
+
+/* v0.8.22: shared enterprise layout, scoped to presentation. */
+:root{--space-unit:4px;--muted:#596570;--line:#dce2e6}
+html{scroll-padding-block:88px 80px}button,input,select,textarea,summary,[tabindex]{scroll-margin-block:88px 80px}
+:where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #947020;outline-offset:3px}
+.view>.toolbar{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.view>.toolbar h2{font-size:22px;line-height:1.35;letter-spacing:-.02em}.view>.toolbar p{max-width:68ch}
+.view .hint{font-size:12px;line-height:1.7}.view button:not(.leaflet-control button){min-height:40px}
+.view :is(.formgroup,.panel,.moduleSurface,.targetSection){border-radius:12px;box-shadow:none}
+.view .formgroup h3{font-size:15px;color:#37444b}.view .grid{align-items:start}
+.view input:not([type=checkbox]):not([type=radio]):not([type=hidden]),.view select{min-height:44px}
+.view textarea{min-height:88px;resize:vertical}.view .grid label{line-height:1.5}
+.workspaceTable{margin-top:12px}.workspaceTable td{padding:14px 16px;line-height:1.6;color:#35414a}.workspaceTable th{padding:14px 16px;color:#46525c;background:#edf1f3}
+.workspaceTable tbody tr:hover{background:#f7f9fa}.workspaceTable td button{margin:3px 4px 3px 0}.workspaceTable th,.workspaceTable td{font-variant-numeric:tabular-nums}
+.view>.tabs{margin-block:0 24px}.modulebar{gap:16px;flex-wrap:wrap}.modulebar span{font-size:12px}.entry{border-color:#dbe1e5;background:#fafbfc}.entry summary{font-size:13px;color:#574718}.moduleform{background:#fff;border-radius:0 0 10px 10px}
+.view .actions{display:flex;align-items:center;flex-wrap:wrap}.view .actions>[role=status]{flex:1 1 220px;line-height:1.6}
+#dashboard .availabilityPanel{padding:20px}.availabilityMetrics{margin-bottom:12px}.availabilityMetrics strong{font-size:26px}.availabilityHead h3{font-size:16px}.availabilityRigs>summary{padding-block:8px}.availabilityNotice{margin-top:10px}.availabilityClear{margin-top:10px}
+#reportForm .formgroup{margin-bottom:20px}#reportForm .ddrRow{box-shadow:none}#reportForm .ddrRows{margin-block:12px}
+#rigList,#userList,#deletionHistory{min-width:0}#deletionHistory{margin-top:24px}
+.commercialFilters{gap:16px;align-items:end}.billingListHeading{gap:16px;flex-wrap:wrap;margin-top:24px}.billingTabs{flex-wrap:wrap;gap:8px}
+#mapWorkspace{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#loginGate{align-items:safe center}.loginCard [hidden]{display:none!important}.loginCard{gap:14px}.loginCardBrand{margin-bottom:8px}.loginCopyright{padding-top:16px;margin-top:8px}
+body.authLocked{overflow:hidden}.loginGate{overscroll-behavior:contain}
+@media(min-width:1100px){.loginGate{padding:24px 40px}.loginStory{min-height:480px}.loginLayout{min-height:0}.loginCard{padding:32px 38px}.loginStoryText h1{font-size:clamp(38px,3.6vw,62px)}}
+@media(max-width:960px){.view>.toolbar{gap:16px}.view>.toolbar h2{font-size:21px}.view .moduleSurface,.view .formgroup,.view .panel{padding:20px}}
+@media(max-width:600px){html{scroll-padding-block:72px 80px}.view>.toolbar{padding-bottom:16px;margin-bottom:20px}.view>.toolbar h2{font-size:20px}.view button{min-height:44px}.view .moduleSurface,.view .formgroup,.view .panel{padding:16px}.workspaceTable td{padding:10px 12px}.view .tabs{gap:6px;padding:6px}.view .tabs .tab{flex:1 1 auto;text-align:center}.view .actions>button{flex:1 1 auto}.availabilityMetrics strong{font-size:20px}.loginStoryText h1{font-size:28px}.loginCard{padding:24px;gap:12px}.loginGate{align-items:start}}
+@media(max-width:360px){.availabilityMetrics strong{font-size:17px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+#serverContext:empty,#depthCheck:empty{display:none}#serverContext{margin-bottom:16px}#targetReadOnly[hidden]{display:none!important}
+body,button,input,select,textarea{font-family:Arial,"Segoe UI",sans-serif}
