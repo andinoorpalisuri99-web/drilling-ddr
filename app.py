@@ -114,6 +114,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send(403,{'error':'Peran akun tidak memiliki akses untuk tindakan ini'});return None
         return user
 
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-Type','text/html; charset=utf-8')
+        self.send_header('Content-Length','0')
+        self.end_headers()
+
     def do_GET(self):
         try:
             return self.get_request()
