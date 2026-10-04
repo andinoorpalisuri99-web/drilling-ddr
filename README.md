@@ -1,42 +1,40 @@
-MMS DRILLING v0.8.22 — LAYOUT, LOGIN FIRST & PROJECT ICON
-PAKET KODE TANPA DATABASE. Upgrade dari v0.8.21.
+MMS DRILLING v0.8.23 — RINGKASAN MANAGEMENT & PEMBARUAN APLIKASI
+PAKET TANPA DATABASE. Upgrade kode v0.8.22.
 
-PASANG DI KOMPUTER LOKAL
-1. Hentikan aplikasi lama (Ctrl+C). Backup folder aplikasi/database terlebih dahulu.
-2. Ekstrak ZIP ini. Salin isi folder Drilling ke folder aplikasi v0.8.21 yang sedang dipakai; replace file kode yang sama.
-3. drilling.db, drilling.db-wal, drilling.db-shm dan folder backup tidak ada dalam paket ini. Jangan hapus atau mengganti database yang ada.
-4. Jalankan MULAI.bat dari folder aplikasi tersebut. Muat ulang browser Ctrl+F5.
-5. Pertahankan alamat/port browser dan data situs supaya antrean offline tetap tersedia. Jangan clear site data.
+INSTALASI LOKAL
+Backup folder terlebih dahulu. Hentikan aplikasi (Ctrl+C), salin isi Drilling dari ZIP ke folder aplikasi yang sedang dipakai, replace file kode, lalu jalankan MULAI.bat.
+Database dan file WAL/SHM tidak ada dalam ZIP ini; pertahankan data milik Anda.
+Jangan clear site data/browser storage agar antrean offline tetap tersedia.
 
-UNTUK WEBSITE/HOSTING
-Deploy isi kode ke aplikasi/layanan yang sama melalui proses hosting Anda. Pertahankan konfigurasi DRILLING_DB dan volume database persisten. ZIP ini tidak mengubah konfigurasi hosting, tidak menyertakan database, dan belum dipasang otomatis ke website publik.
+HOSTING/RENDER
+Commit/push file kode beserta folder static ke repo yang dipakai layanan yang sama. Pastikan proses deploy berhasil dan layanan baru sudah berjalan. Pertahankan DRILLING_DB/volume database persisten serta konfigurasi hosting yang sudah dipakai.
+Paket ini tidak melakukan deploy ke website publik. Mengunggah ZIP ke repo tanpa mengekstrak dan memperbarui file kode tidak memperbarui aplikasi.
 
-PERUBAHAN
-- Konsistensi jarak, judul, pemisah, kartu, tabel, filter, tombol, form dan tampilan mobile pada seluruh nav.
-- Ukuran kontrol dan fokus keyboard lebih jelas; scroll padding untuk header/footer tetap.
-- Empty field hint tidak menyisakan ruang kosong berlebihan pada Input Shift.
-- Keterangan Target dasar historis diperjelas agar tidak terkesan seluruh halaman target read-only.
-- Login tampil sejak HTML pertama dimuat, termasuk saat jaringan lambat; workspace tidak tampil sebelum masuk.
-- Bila sesi valid masih tersimpan, tersedia Lanjutkan sebagai [akun]. Tidak wajib mengetik password ulang. Saat sesi berakhir, login kembali.
-- Mode offline tetap tersedia dari halaman login melalui tombol Masuk mode offline tersimpan, sesudah login online dengan Ingat saya dan cache master sudah tersedia. Antrean offline tidak dihapus.
-- Favicon SVG + ICO khusus proyek: menara bor emas dan mata bor putih di atas latar gelap, mengikuti identitas warna aplikasi. Menggantikan ikon bumi default browser.
+PERUBAHAN PA/UA
+Tampilan utama dan rincian rig memakai satu angka:
+PA = (jam terjadwal - maintenance tercatat) / jam terjadwal x 100%.
+UA = operating tercatat / (jam terjadwal - maintenance tercatat) x 100%.
+Jam terjadwal tetap 10 jam per rig/tanggal yang memiliki DDR aktif non-Rejected, termasuk beberapa DDR pada tanggal yang sama. Tidak memakai jam tercatat sebagai pengganti denominator scheduled.
+Jika jam kurang/belum terklasifikasi, angka berlabel Sementara. PA bisa lebih tinggi dan UA bisa lebih rendah dibanding angka akhir. Tidak ada aktivitas tambahan yang dimasukkan untuk mengisi jam kosong.
+Angka dihitung ulang setelah revisi tersimpan dan Overview dimuat, atau pemeriksaan otomatis online 30 detik saat tab aktif/dialog tertutup.
+Overlap, di luar jadwal, atau rincian tidak valid tetap menahan angka. UA — bila available=0. Tanggal tanpa DDR belum termasuk cakupan jadwal.
 
-RUANG LINGKUP
-Tidak mengubah rumus produksi, recovery, billing, downtime, PA/UA, validasi DDR, ekspor PDF/Excel, atau struktur database. Backend hanya penyesuaian versi dan penyajian favicon. Database di workspace uji tetap identik dengan v0.8.21; file database tidak ikut ZIP.
+TAMPILAN
+Ringkasan PA/UA lebih singkat; rincian jam dan rumus ada pada Rincian per rig & dasar hitung.
+Catatan cakupan Overview, penjelasan komersial, panduan panjang pada menu operasional dan peta dipindahkan ke disclosure Panduan/Cakupan data.
+Peringatan jam kurang, validasi, notifikasi offline, dan petunjuk penting input tetap tersedia. Data dan akses pengguna dipertahankan.
 
-VERIFIKASI
-10 nav: Overview, Target, Peta, Input Shift, Daily report, Equipment, Sample, Cost, Master Rig, Pengguna.
-10 subtab operasional: equipment/material/stock, boxes/samples/custody/tracking, programs/expenses/invoices.
-Viewport 320,390,768,844,961,1024,1440,1920; tabel berisi data, form tambah, edit rig, QR tracking, peta. Tidak ada overflow halaman/input atau error JavaScript dalam skenario ini.
-Login fresh, reload dengan sesi valid, lanjut sesi tanpa password, logout/reload, offline tersimpan, jaringan lambat, endpoint favicon SVG/ICO diuji pada salinan database.
+PERBAIKAN UPDATE
+Penyebab yang ditemukan: HTML baru dapat menggunakan JavaScript lama dari cache service worker. Pemeriksaan versi sebelumnya langsung menganggap server lama masih berjalan, padahal halaman/browser yang tertinggal.
+File JS/CSS kini memakai penanda versi pada URL. Saat online service worker memuat aset terbaru dari jaringan; saat offline memakai cache. API tetap tidak disimpan dalam cache tersebut.
+Perbedaan versi mencoba penyelarasan otomatis sekali per pasangan versi/tab. Jika tetap berbeda, tampil versi halaman/server, informasi deploy belum sinkron, dan tombol Periksa pembaruan. Tidak ada reload loop.
+Login tetap halaman awal. Sesi valid dapat dilanjutkan tanpa password. Tidak menghapus IndexedDB, database, sesi, maupun antrean offline untuk memperbaiki cache.
+Pada perpindahan dari versi sebelum v0.8.23, bila tab yang sudah lama terbuka belum berubah, muat ulang setelah deploy selesai. Ctrl+F5 hanya diperlukan bila peramban masih menahan halaman lama. Pada server yang memang belum menjalankan kode terbaru, deploy/restart layanan tetap diperlukan.
 
-ACUAN DESAIN
-IBM Carbon: tabel, jarak kolom dan susunan data.
-https://www.carbondesignsystem.com/building-blocks/core/components/data-table/specifications
-Microsoft Fluent 2: grid, spacing dan konsistensi hubungan komponen.
-https://fluent2.microsoft.design/layout
-Google Material 3: layout adaptif dan hierarki.
-https://m3.material.io/foundations/layout/canonical-examples/overview
-W3C WCAG 2.2: fokus keyboard tidak tertutup header/footer.
-https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum
-Referensi diterapkan sesuai kebutuhan aplikasi. Bukan klaim sertifikasi WCAG atau standar perusahaan tertentu; hasil verifikasi terbatas pada skenario dan perangkat uji di atas.
+HASIL UJI
+- Migrasi nyata browser dengan cache/service worker v0.8.22 menuju server v0.8.23: login baru berhasil, antrean offline tetap ada.
+- Versi server berbeda sengaja disimulasikan: satu penyelarasan otomatis lalu pesan informatif; tidak ada loop.
+- Satu angka PA/UA seluruh dataset: 98,75% / 30,90% (Sementara), berdasarkan 42 DDR baseline. Angka di website dapat berbeda sesuai data/filter yang dipakai.
+- 10 nav/10 subtab, 8 ukuran 320–1920, populated tables/form/QR/map: tidak ada overflow halaman/input atau error JavaScript pada skenario uji.
+- Login awal, lanjut sesi, logout, jaringan lambat dan offline tersimpan lolos.
+- Modul produksi, recovery, billing, downtime, sumber jam PA/UA, ekspor, validasi, auth dan database byte-identical terhadap v0.8.22. Perubahan PA/UA ada pada pemilihan nilai presentasi, bukan rawdata.

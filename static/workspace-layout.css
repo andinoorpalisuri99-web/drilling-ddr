@@ -122,3 +122,7 @@ body.authLocked{overflow:hidden}.loginGate{overscroll-behavior:contain}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
 #serverContext:empty,#depthCheck:empty{display:none}#serverContext{margin-bottom:16px}#targetReadOnly[hidden]{display:none!important}
 body,button,input,select,textarea{font-family:Arial,"Segoe UI",sans-serif}
+
+/* v0.8.23: concise management surfaces, with explanations on demand. */
+.contextHelp{margin:8px 0 16px;font-size:12px;color:#596570}.contextHelp>summary{cursor:pointer;min-height:32px;display:list-item;padding:7px 0;font-weight:600}.contextHelp[open]>p{margin-top:10px;max-width:90ch}.view>.toolbar:has(.contextHelp){display:block}.contextHelp .hint{margin-bottom:0}.availabilityMetrics{grid-template-columns:1fr 1fr;max-width:720px;margin-block:12px 16px}.availabilityMetrics strong{font-size:30px}.availabilityMetrics small{font-size:11px}.availabilityHead h3{margin-bottom:4px}.availabilityRigs{padding-top:4px}.availabilityNotice summary{font-weight:600}.availabilityPanel .availabilityMetrics article{padding:0}.availabilityBadge{font-size:11px}
+@media(max-width:600px){.availabilityMetrics strong{font-size:26px}.contextHelp{margin-bottom:12px}}

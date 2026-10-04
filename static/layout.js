@@ -3,6 +3,13 @@
   const root = document.querySelector('main');
   const filterLabels = {dashboardPeriod:'Periode',dateFilter:'Tanggal / periode',overviewRig:'Rig',reportDate:'Tanggal laporan',rigFilter:'Rig'};
   function decorate() {
+    const noteSelectors=['#dashboardCoverage','#commercialPanel > .hint','#new > .toolbar p','#targetsView > .toolbar p','#rigMasterView > .toolbar p','#ddrSettings .settingsCard > .hint','.trackingIntro p','.mapFootnote','.timeSectionHead .hint'];
+    for(const selector of noteSelectors)root.querySelectorAll(selector).forEach(note=>{
+      if(note.closest('details')||note.querySelector('input,button,select')||note.dataset.concise)return;
+      const disclosure=document.createElement('details');disclosure.className='contextHelp';
+      const title=document.createElement('summary');title.textContent=note.id==='dashboardCoverage'?'Cakupan data':'Panduan';
+      note.before(disclosure);disclosure.append(title,note);note.dataset.concise='1';
+    });
     for (const [id, text] of Object.entries(filterLabels)) {
       const input = document.getElementById(id);
       if (!input || input.closest('.filterField')) continue;
